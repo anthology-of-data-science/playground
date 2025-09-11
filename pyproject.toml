@@ -1,0 +1,11 @@
+[project]
+name = "polars-playground"
+version = "0.1.0"
+description = "Data science demonstrator notebooks using polars and other new(er) libraries"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "altair>=5.5.0",
+    "marimo>=0.15.2",
+    "polars>=1.33.1",
+]
