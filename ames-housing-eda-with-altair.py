@@ -1,31 +1,178 @@
 import marimo
 
 __generated_with = "0.15.2"
-app = marimo.App()
+app = marimo.App(width="medium")
 
 
 @app.cell
 def _():
+    from pprint import pp
+
     import altair as alt
     import marimo as mo
     import polars as pl
+    import polars.selectors as cs
+    return alt, cs, mo, pl, pp
 
 
-    ames_data = "https://github.com/eaisi/discover-projects/blob/main/ames-housing/AmesHousing.csv?raw=true"
-    train = pl.read_csv(ames_data).rename(lambda s: s.replace(" ", ""))
-
-    train
-    return alt, mo, pl, train
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""This notebook demonstrates explorative data analysis using the [Ames Housing dataset ](https://github.com/EAISI/discover-projects/tree/main/ames-housing). To do so, it explores some of Altair's interesting features based on [this blogpost](https://www.kaggle.com/code/jacoporepossi/eda-is-awesome-having-fun-with-altair/notebook) and demonstrates some Python Kung Fu that is useful in day-to-day data wrangling."""
+    )
+    return
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
-    This notebook collects my **explorations of Altair's most interesting features**. 
-    Source: https://www.kaggle.com/code/jacoporepossi/eda-is-awesome-having-fun-with-altair/notebook
+    # Load the dataset
+
+    ## Do renaming and type casting when loading data
     """
     )
+    return
+
+
+@app.cell
+def _(cs, pl):
+    # url
+    ames_data = "https://github.com/eaisi/discover-projects/blob/main/ames-housing/AmesHousing.csv?raw=true"
+
+    # load and remove spaces in col names and cast types
+    # use polars selectors https://docs.pola.rs/api/python/stable/reference/selectors.html
+    df = (
+        pl.read_csv(ames_data)
+        .rename(lambda s: s.replace(" ", ""))
+        .with_columns((cs.string() - cs.by_name(["Neighborhood"])).cast(pl.Categorical), pl.col("SalePrice").cast(pl.Int32))
+    )
+
+    df
+    return (df,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Join and download extra data directly""")
+    return
+
+
+@app.cell
+def _(df, pl):
+    # load names of neighbourhodds
+    ames_names = "https://github.com/EAISI/discover-projects/raw/refs/heads/main/ames-housing/Neighborhood%20names.xlsx"
+
+
+    def get_binary(url):
+        """Download binary file in memory without saving to disk."""
+        from io import BytesIO
+        import requests
+
+        try:
+            response = requests.get(url)
+
+            # Raise an exception if the request was unsuccessful (e.g., 404 Not Found)
+            response.raise_for_status()
+
+            # Get the binary content of the response
+            file_content = response.content
+
+            # Create an in-memory binary stream from the file content using BytesIO
+            # This allows polars to read the data as if it were a file on disk
+            file_buffer = BytesIO(file_content)
+
+            # Read the Excel data from the buffer into a Polars DataFrame
+            # The `read_excel` function can accept a file path or a file-like object
+            df = pl.read_excel(file_buffer)
+
+            return df
+
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred during download: {e}")
+            return None
+        except Exception as e:
+            print(f"An error occurred while processing the file: {e}")
+            return None
+
+
+    df.join(get_binary(ames_names), on="Neighborhood", how="left").select(["PID", "Neighborhood", "Neighborhood_full"])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    # Descriptive statistics
+
+    Let start with some basics in polars
+
+
+    """
+    )
+    return
+
+
+@app.cell
+def _(df, pp):
+    # use schema attribute to get list of column names with types
+    pp(df.schema)
+    return
+
+
+@app.cell
+def _(cs, df):
+    df.select(cs.numeric()).describe().with_columns(cs.numeric().round(2))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Counting column types with `Counter`""")
+    return
+
+
+@app.cell
+def _(df):
+    # Count column dtypes
+    from collections import Counter
+
+    Counter(df.dtypes)
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Count missing value per column""")
+    return
+
+
+@app.cell
+def _(alt, df, pl):
+    # list of columns with count of missing value in long format
+    missing = (
+        df.select(pl.all().is_null().sum())
+        .transpose(include_header=True, column_names=["is_null_count"])
+        .sort(by="is_null_count", descending=True)
+    )
+
+    # highlighted bar chart
+    alt.Chart(missing.filter(pl.col("is_null_count") > 0)).mark_bar().encode(
+        x="is_null_count",
+        y=alt.X("column", sort="-x"),
+        color=alt.condition(
+            alt.datum["is_null_count"] > 10,  # If count missing is > 10%, returns True,
+            alt.value("orange"),  # which sets the bar orange.
+            alt.value("steelblue"),  # And if it's not true it sets the bar steelblue.
+        ),
+        tooltip=["is_null_count"],
+    ).properties(width=500, height=300).configure_axis(grid=False)
     return
 
 
@@ -61,29 +208,8 @@ def _(mo):
     return
 
 
-@app.cell
-def _(pl, train):
-    missing = (
-        train.select(pl.all().is_null().sum())
-        .transpose(include_header=True, column_names=["is_null_count"])
-        .sort(by="is_null_count", descending=True)
-    )
-    missing
-    return (missing,)
-
-
-@app.cell
-def _(alt, missing):
-    alt.Chart(missing).mark_bar().encode(
-        x=alt.X("Column", sort="-y"),
-        y="Count missing",
-        color=alt.condition(
-            alt.datum["Count missing"] > 10,  # If count missing is > 10%, returns True,
-            alt.value("orange"),  # which sets the bar orange.
-            alt.value("steelblue"),  # And if it's not true it sets the bar steelblue.
-        ),
-        tooltip=["Count missing"],
-    ).properties(width=500, height=300).configure_axis(grid=False)
+@app.cell(hide_code=True)
+def _():
     return
 
 
@@ -100,8 +226,8 @@ def _(mo):
 
 
 @app.cell
-def _(alt, train):
-    alt.Chart(train).mark_boxplot().encode(x="OverallQual:O", y="SalePrice:Q", color="OverallQual:N").properties(
+def _(alt, df):
+    alt.Chart(df).mark_boxplot().encode(x="OverallQual:O", y="SalePrice:Q", color="OverallQual:N").properties(
         width=500, height=300
     )
     return
