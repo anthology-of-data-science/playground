@@ -10,9 +10,7 @@ def _(mo):
         r"""
     # Working with Kuzu and networkx
 
-    ## The MovieLens database
-
-    - https://grouplens.org/datasets/movielens/
+    We use the [MovieLens database](https://grouplens.org/datasets/movielens/) to play around with property graphs, using Kuzu as the in-memory engine. This notebook is a rewrite/adapation from an [older version](https://colab.research.google.com/drive/1_AK-CHELz0fLAc2RCPvPgD-R7-NGyrGu#scrollTo=b9fyxgdITXsu)
     """
     )
     return
