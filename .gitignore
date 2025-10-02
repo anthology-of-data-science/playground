@@ -1,1 +1,4 @@
 .DS_Store
+**/movielens/ml-latest-small
+*.zip
+**/kuzu-movielens-db
