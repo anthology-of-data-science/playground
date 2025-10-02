@@ -10,6 +10,8 @@ The [State of Python 2025](https://blog.jetbrains.com/pycharm/2025/08/the-state-
 
 The polars dataframe API has emerged as a de facto standard, as illustrated by the popularity of the [`narwhals`](https://github.com/narwhals-dev/narwhals) dataframe interoperability layer.
 
+On top of that, in-memory analytical engines like [DuckDB](https://duckdb.org), [Kuzu](https://docs.kuzudb.com/) and [LanceDB](https://docs.kuzudb.com/) have made it a lot easier to use databases (relational, property graph or vector database, respectively) in the data engineering workflow.
+
 So given all these developments, I am gradually rewriting my example notebooks in this new stack.
 
 ## marimo as the new reactive notebook
