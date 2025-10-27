@@ -1,13 +1,13 @@
 [project]
-name = "polars-playground"
-version = "0.1.0"
-description = "Data science demonstrator notebooks using polars and other new(er) libraries"
+name = "data-science-playground"
+version = "0.2.0"
+description = "Data science playground with the new pydata stack"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "altair>=5.5.0",
     "fastexcel[polars,pyarrow]>=0.15.1",
-    "kuzu>=0.11.2",
+    "kuzu>=0.11.3",
     "marimo[lsp]>=0.15.2",
     "matplotlib>=3.10.6",
     "networkx>=3.5",
